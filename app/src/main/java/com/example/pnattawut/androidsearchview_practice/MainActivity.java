@@ -49,8 +49,6 @@ public class MainActivity extends AppCompatActivity {
         searchView = (SearchView) findViewById(R.id.simpleSearchView);
         listView = (ListView) findViewById(R.id.lstvw_softwares);
 
-//        new LoadAsyncTask().execute();
-
         //Initialize Color's List
         try {
             colors = new Gson().fromJson(Ion.with(this).load(URL).asString().get(), new TypeToken<ArrayList<Color>>() {}.getType());
@@ -99,34 +97,4 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    class LoadAsyncTask extends AsyncTask {
-        private Retrofit retrofit;
-        private ColorService colorService;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            retrofit = new Retrofit.Builder()
-                    .baseUrl(URL)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
-            colorService = retrofit.create(ColorService.class);
-        }
-
-        @Override
-        protected Object doInBackground(Object[] params) {
-            try {
-                Log.d("doInBackground", colorService.colorList().execute().toString());
-                colorService.colorList().execute();
-/*
-            filteredColors =  new ArrayList<>(colors);
-            colorArrayAdapter = new ColorAdapter(this, R.layout.color_row, filteredColors);
-            listView.setAdapter(colorArrayAdapter);
-*/
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-    }
 }
