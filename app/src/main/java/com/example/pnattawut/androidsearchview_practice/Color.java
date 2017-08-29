@@ -1,11 +1,17 @@
 package com.example.pnattawut.androidsearchview_practice;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by PNattawut on 28-Aug-17.
  */
 
 public class Color {
+
+    @SerializedName("color")
     private String color;
+
+    @SerializedName("value")
     private String value;
 
     public String getColor() {
