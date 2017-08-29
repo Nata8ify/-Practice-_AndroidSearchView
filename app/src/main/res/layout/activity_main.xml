@@ -10,6 +10,8 @@
     <SearchView
         android:id="@+id/simpleSearchView"
         android:layout_width="match_parent"
+        android:background="#ddd"
+        android:queryHint="Keyword (re, bl, ue, ...)"
         android:layout_height="wrap_content"/>
 
     <ListView
@@ -17,9 +19,4 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"></ListView>
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="restore"
-        android:onClick="restore" />
 </LinearLayout>

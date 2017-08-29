@@ -1,5 +1,6 @@
 package com.example.pnattawut.androidsearchview_practice;
 
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,112 +20,75 @@ import org.apache.commons.collections.IteratorUtils;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
     private SearchView searchView;
-
     private ListView listView;
-    private ArrayAdapter colorNameListAdapter;
 
-    private List<String> colorNames; //Full Color Names
-    private List<String> filteredColorNames; //Filtered Color Names;
+    private List<Color> colors; //Full Color Names
+    private List<Color> filteredColors; //Full Color Names
+    private ArrayAdapter<Color> colorArrayAdapter;
+
+    //Get color's JSON object from URL and parse to List<Color>
+    // [ { color: "red", value: "#ff0000" }, { color: "green", value: "#00ff00" }, { color: "blue", value: "#000ff" }, { color: "cyan", value: "#00ffff" }, { color: "magenta", value: "#ff00ff" }, { color: "yellow", value: "#ffff00" }, { color: "black", value: "#000000" } ]
+    private final String URL = "http://54.254.187.201:8080/ListAPIs/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //Initialize Color's List
-        colorNames = getColorNames(getColors());
-        if (filteredColorNames == null) {
-            filteredColorNames = new ArrayList<>();
-        }
-        filteredColorNames.addAll(this.colorNames);
-
-        //Initialize View
         searchView = (SearchView) findViewById(R.id.simpleSearchView);
         listView = (ListView) findViewById(R.id.lstvw_softwares);
-        colorNameListAdapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, filteredColorNames);
-        listView.setAdapter(colorNameListAdapter);
 
-        //Set SearchView Listener up
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            // If submit key is pressed then ...
-            @Override
-            public boolean onQueryTextSubmit(String nameLike) {
-                Log.d("onQueryTextSubmit >> ", nameLike);
-                filterColorList(nameLike);
-                notifyChanged();
-                return false;
-            }
 
-            // If text on SearchView is changed then ...
-            @Override
-            public boolean onQueryTextChange(String nameLike) {
-                Log.d("onQueryTextChange >> ", nameLike);
-                filterColorList(nameLike);
-                notifyChanged();
-                return false;
-            }
-        });
-    }
-
-    //Get color's JSON object from URL and parse to List<Color>
-    private final String URL = "http://54.254.187.201:8080/ListAPIs/";
-    public List<Color> getColors() {
-        String response = null;
+        //Initialize Color's List
         try {
-            response = Ion.with(this)
-                    .load(URL)
-                    .asString()
-                    .get();
+            colors = new Gson().fromJson(Ion.with(this).load(URL).asString().get(), new TypeToken<ArrayList<Color>>() {}.getType());
+            filteredColors =  new ArrayList<>(colors);
+            colorArrayAdapter = new ColorAdapter(this, R.layout.color_row, filteredColors);
+            listView.setAdapter(colorArrayAdapter);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
-        return new Gson().fromJson(response, new TypeToken<ArrayList<Color>>() {
-        }.getType());
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                filter(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                filter(newText);
+                return false;
+            }
+        });
     }
 
-    //Get a color name's list(List<String>) from color list (List<Color>)
-    public List<String> getColorNames(List<Color> colorList) {
-        if (colorList == null) {
-            return null;
-        }// If 'colorList' is null then return null
-        List<String> colorNames = new ArrayList<>();
-        for (Color color : colorList) {
-            colorNames.add(color.getColor());
-        }
-        return colorNames;
-    }
-
-    //Filter a color names by a color's keyword
-    public void filterColorList(String nameLike) {
-        Iterator<String> colorNamesItr = filteredColorNames.iterator(); //Prevent from Concurrent$Modification Exception
-        while (colorNamesItr.hasNext()) {
-            if (!colorNamesItr.next().contains(nameLike)) {
-                colorNamesItr.remove();
+    private Iterator<Color> colorItr;
+    public void filter(String query){
+        colorItr = filteredColors.listIterator();
+        while(colorItr.hasNext()){
+            if(!colorItr.next().getColor().contains(query)){
+                Log.d("contain", "KKO");
+                colorItr.remove();
             }
         }
+        colorArrayAdapter.notifyDataSetChanged();
+
+        /*  */
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                filteredColors.clear();
+                filteredColors.addAll(MainActivity.this.colors);
+            }
+        }, 100L);
     }
-
-    //Notify ListView for data changed.
-    public void notifyChanged() {
-        Log.d("notifyChanged", colorNames.toString());
-        Log.d("notifyChanged", filteredColorNames.toString());
-        colorNameListAdapter.notifyDataSetChanged();
-    }
-
-    //Restore color's list to ListView.
-    public void restore(View v) {
-        filteredColorNames.clear();
-        filteredColorNames.addAll(this.colorNames);
-        colorNameListAdapter.notifyDataSetChanged();
-
-    }
-
-
 }
