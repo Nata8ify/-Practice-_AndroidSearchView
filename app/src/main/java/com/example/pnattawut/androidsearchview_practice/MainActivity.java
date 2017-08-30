@@ -1,28 +1,20 @@
 package com.example.pnattawut.androidsearchview_practice;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SearchView;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.koushikdutta.ion.Ion;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
-import okhttp3.OkHttpClient;
-import okhttp3.ResponseBody;
 import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.GET;
@@ -39,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
 
     //Get color's JSON object from URL and parse to List<Color>
     // [ { color: "red", value: "#ff0000" }, { color: "green", value: "#00ff00" }, { color: "blue", value: "#000ff" }, { color: "cyan", value: "#00ffff" }, { color: "magenta", value: "#ff00ff" }, { color: "yellow", value: "#ffff00" }, { color: "black", value: "#000000" } ]
-    private final String URL = "http://54.254.187.201:8080/ListAPIs";
+    private final String URL = "http://54.254.187.201:8080/ListAPIs/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,16 +42,25 @@ public class MainActivity extends AppCompatActivity {
         listView = (ListView) findViewById(R.id.lstvw_softwares);
 
         //Initialize Color's List
-        try {
-            colors = new Gson().fromJson(Ion.with(this).load(URL).asString().get(), new TypeToken<ArrayList<Color>>() {}.getType());
-            filteredColors =  new ArrayList<>(colors);
-            colorArrayAdapter = new ColorAdapter(this, R.layout.color_row, filteredColors);
-            listView.setAdapter(colorArrayAdapter);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        retrofit.create(ColorService.class).colors().enqueue(new Callback<List<Color>>() {
+            @Override
+            public void onResponse(Call<List<Color>> call, Response<List<Color>> response) {
+                colors = response.body();
+                filteredColors = new ArrayList<>(colors);
+                colorArrayAdapter = new ColorAdapter(MainActivity.this, R.layout.color_row, filteredColors);
+                listView.setAdapter(colorArrayAdapter);
+            }
+
+            @Override
+            public void onFailure(Call<List<Color>> call, Throwable t) {
+
+            }
+        });
+
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -80,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
     public void filter(String query) {
         colorItr = filteredColors.listIterator();
         while (colorItr.hasNext()) {
-            if (!colorItr.next().getColor().contains(query)) {
+            if (!colorItr.next().getColor().toLowerCase().contains(query.toLowerCase())) {
                 colorItr.remove();
             }
         }
@@ -96,5 +97,9 @@ public class MainActivity extends AppCompatActivity {
         }, 100L);
     }
 
+    interface ColorService {
+        @GET("list")
+        Call<List<Color>> colors();
+    }
 
 }
