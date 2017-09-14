@@ -8,8 +8,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -39,6 +42,18 @@ public class ColorAdapter extends ArrayAdapter<Color> {
         TextView colorName = ((TextView)row.findViewById(R.id.colorName));
         colorName.setText(colors.get(position).getColor());
         TextView colorValue = ((TextView)row.findViewById(R.id.colorValue));
+
+        //--EditText and its action button.
+        final EditText edtxtColorFeel = ((EditText)row.findViewById(R.id.edtxtColorFeel));
+        Button btnSubmitFeel = (Button)row.findViewById(R.id.btnSubmitFeel);
+
+        btnSubmitFeel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(context, edtxtColorFeel.getText().toString(), Toast.LENGTH_LONG).show(); //TODO
+            }
+        });
+
         colorValue.setText(colors.get(position).getValue());
         return  row;
     }
